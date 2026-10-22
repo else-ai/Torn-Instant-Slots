@@ -1,8 +1,7 @@
 // ==UserScript==
-// @name         Instant Slots
-// @namespace    http://tampermonkey.net/
-// @version      1.0
-// @description  Removes parts of slot  machine animation.
+// @name         Instan Slots
+// @version      1.1
+// @description  Uses an ES6 Proxy engine to speed up slots. The most highly optimized and resource-efficient approach. Includes a 700ms safety lock.
 // @author       ZEM
 // @match        https://www.torn.com/loader.php?sid=slots*
 // @match        https://www.torn.com/page.php?sid=slots*
@@ -13,19 +12,44 @@
 (function() {
     'use strict';
 
+    const win = typeof unsafeWindow !== 'undefined' ? unsafeWindow : window;
 
-    const INSTANT_SPEED_MS = 50;
+    win.JSON = new Proxy(win.JSON, {
+        get(target, prop) {
+            if (prop === 'parse') {
+                return function(text, reviver) {
+                    const data = target.parse(text, reviver);
 
-    const pageWindow = typeof unsafeWindow !== 'undefined' ? unsafeWindow : window;
-    const originalJSONParse = pageWindow.JSON.parse;
+                    if (data?.barrelsAnimationSpeed !== undefined) {
+                        data.barrelsAnimationSpeed = 50;
+                        delete data.error;
+                        delete data.errorMsg;
+                    }
 
-    pageWindow.JSON.parse = function(text, reviver) {
-        const data = originalJSONParse.call(this, text, reviver);
-
-        if (data && typeof data === 'object' && 'barrelsAnimationSpeed' in data) {
-            data.barrelsAnimationSpeed = INSTANT_SPEED_MS;
+                    return data;
+                };
+            }
+            return target[prop];
         }
+    });
 
-        return data;
-    };
+    window.addEventListener('DOMContentLoaded', () => {
+        const betButtons = document.querySelectorAll('.slots-btn-list .betbtn');
+
+        betButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                betButtons.forEach(b => {
+                    b.style.pointerEvents = 'none';
+                    b.style.opacity = '0.4';
+                });
+
+                setTimeout(() => {
+                    betButtons.forEach(b => {
+                        b.style.pointerEvents = 'auto';
+                        b.style.opacity = '1';
+                    });
+                }, 700);
+            });
+        });
+    });
 })();
