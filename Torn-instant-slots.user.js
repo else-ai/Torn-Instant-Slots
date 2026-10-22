@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         Instan Slots
+// @name         Insta Slots
 // @version      1.1
 // @description  Uses ES6 Proxy engine to speed up slots. The most highly optimized and resource-efficient approach. Includes a 700ms safety lock.
 // @author       ZEM
